@@ -16,7 +16,7 @@ public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
         rpcClient = new Tron(nileNet);
      //   rpcClient.transferTRX(myAddress, myAddress2, 100);
-        rpcClient.getNowBlock();
+        rpcClient.GetTransactionInfoByBlockNum();
 
 //        server = new TronServer();
 //        server.start();

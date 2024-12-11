@@ -28,6 +28,14 @@ public class Tron {
         log.info(String.valueOf(block.getBlockid()));
     }
 
+    public void GetTransactionInfoByBlockNum() {
+        GrpcAPI.NumberMessage.Builder number = GrpcAPI.NumberMessage.newBuilder();
+        number.setNum(63800);
+        GrpcAPI.TransactionInfoList transInfo = blockingStub.getTransactionInfoByBlockNum(number.build());
+        log.info("Here getTransactionInfoByBlockNum Result");
+        log.info(transInfo.toString());
+    }
+
     public void transferTRX(String from, String to, long amount) {
         byte[] ownerAddress = Utils.decodeFromBase58Check(from);
         byte[] toAddress = Utils.decodeFromBase58Check(to);
