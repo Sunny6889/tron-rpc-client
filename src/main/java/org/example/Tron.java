@@ -12,14 +12,16 @@ import org.example.common.utils.TransactionUtils;
 import org.example.common.utils.Utils;
 import org.example.protos.Protocol;
 import org.example.protos.contract.BalanceContract;
+import org.example.protos.contract.SmartContractOuterClass;
 
 @Slf4j
 public class Tron {
     private WalletGrpc.WalletBlockingStub blockingStub;
-
-    public Tron(String target) {
+    private String privateKey;
+    public Tron(String target, String privateKey) {
         Channel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
         blockingStub = WalletGrpc.newBlockingStub(channel);
+        this.privateKey = privateKey;
     }
 
     public void getNowBlock() {
@@ -49,6 +51,21 @@ public class Tron {
         broadcastTrans(trans);
     }
 
+    public void triggerSmartContract(String from, String contractAddress, long transferTrx, String functionName) {
+        byte[] ownerAddress = Utils.decodeFromBase58Check(from);
+        byte[] toAddress = Utils.decodeFromBase58Check(contractAddress);
+        byte[] data = functionName.getBytes();
+
+        SmartContractOuterClass.TriggerSmartContract.Builder builder = SmartContractOuterClass.TriggerSmartContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(ownerAddress));
+        builder.setContractAddress(ByteString.copyFrom(toAddress));
+        builder.setCallValue(transferTrx); // transferTrx
+        builder.setData(ByteString.copyFrom(data));
+        GrpcAPI.TransactionExtention trans = blockingStub.triggerContract(builder.build());
+        System.out.println("creat transaction is " + trans);
+        broadcastTrans(trans);
+    }
+
     public void broadcastTrans(GrpcAPI.TransactionExtention transExtention) {
         Protocol.Transaction transaction = transExtention.getTransaction();
         System.out.println("before sign transaction hex string is " + ByteArray.toHexString(transaction.toByteArray()));
@@ -57,7 +74,7 @@ public class Tron {
         transaction = TransactionUtils.setExpirationTime(transaction);
 
         // 私钥加密
-        ECKey ecKey = ECKey.fromPrivate(ByteArray.fromHexString("54cc631f7ff8009607c736d096c9f23359a617ddb04379eaf25243588dec7794"));
+        ECKey ecKey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
         Protocol.Transaction signaturedTransaction = TransactionUtils.sign(transaction, ecKey);
         System.out.println("after sign transaction hex string is " + ByteArray.toHexString(transaction.toByteArray()));
 
